@@ -28,10 +28,12 @@
   button.ic{padding:10px 0;width:50px;font-size:16px;white-space:nowrap}
   textarea,pre{font-family:ui-monospace,Menlo,monospace;font-size:15px;margin:0;width:100%}
   .editor{flex:1;min-height:0;position:relative;background:#11111b;border:1px solid #45475a;border-radius:8px;overflow:hidden}
-  #hl,#code{position:absolute;inset:0;margin:0;padding:10px;border:0;border-radius:0;font-size:16px;line-height:1.5;
-    white-space:pre-wrap;overflow-wrap:anywhere;tab-size:4;width:100%;height:100%}
+  #hl,#code{position:absolute;inset:0;margin:0;padding:10px 10px 10px 50px;border:0;border-radius:0;font-size:16px;line-height:1.5;
+    white-space:pre;overflow-wrap:normal;tab-size:4;width:100%;height:100%}
   #hl{overflow:hidden;pointer-events:none;color:#cdd6f4;background:transparent}
   #code{background:transparent;color:transparent;caret-color:#cdd6f4;resize:none;z-index:1;overflow:auto;-webkit-text-fill-color:transparent}
+  #gutter{position:absolute;left:0;top:0;bottom:0;width:40px;box-sizing:border-box;overflow:hidden;background:#11111b;border-right:1px solid #313244;color:#6c7086;text-align:right;padding:10px 6px 10px 0;font-family:ui-monospace,Menlo,monospace;font-size:16px;line-height:1.5;white-space:pre;z-index:2;pointer-events:none}
+  #gutter .err{color:#f38ba8;font-weight:700}
   #code::selection{background:rgba(137,180,250,.35)}
   .k{color:#cba6f7}.s{color:#a6e3a1}.c{color:#6c7086;font-style:italic}.n{color:#fab387}
   .b{color:#89b4fa}.o{color:#f38ba8}.d{color:#f9e2af}
@@ -41,8 +43,8 @@
 </style>
 </head>
 <body>
-<header><h1>🐍 Python </h1><span id="status">Yüklənir…</span><button id="expand" class="sec sm" aria-label="Böyüt"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></header>
-<div class="editor"><pre id="hl" aria-hidden="true"></pre><textarea id="code" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off">name = "Dünya"
+<header><h1>🐍 Python IDLE</h1><span id="status">Yüklənir…</span><button id="expand" class="sec sm" aria-label="Böyüt"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></header>
+<div class="editor"><pre id="hl" aria-hidden="true"></pre><div id="gutter" aria-hidden="true"></div><textarea id="code" wrap="off" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off">name = "Dünya"
 print(f"Salam, {name}!")
 
 for i in range(1, 6):
@@ -113,9 +115,18 @@ function highlight(src) {
   }
   return out + esc(src.slice(last)) + "\n ";
 }
-function render() { hl.innerHTML = highlight(code.value); hl.scrollTop = code.scrollTop; hl.scrollLeft = code.scrollLeft; }
-code.addEventListener("input", render);
-code.addEventListener("scroll", () => { hl.scrollTop = code.scrollTop; hl.scrollLeft = code.scrollLeft; });
+const gut = $("gutter");
+let errLine = 0;
+function renderGutter() {
+  const n = code.value.split("\n").length;
+  let h = "";
+  for (let i = 1; i <= n; i++) h += (i === errLine ? '<span class="err">' + i + "</span>" : i) + "\n";
+  gut.innerHTML = h;
+  gut.scrollTop = code.scrollTop;
+}
+function render() { hl.innerHTML = highlight(code.value); hl.scrollTop = code.scrollTop; hl.scrollLeft = code.scrollLeft; renderGutter(); }
+code.addEventListener("input", () => { errLine = 0; render(); });
+code.addEventListener("scroll", () => { hl.scrollTop = code.scrollTop; hl.scrollLeft = code.scrollLeft; gut.scrollTop = code.scrollTop; });
 render();
 
 $("copy").onclick = async () => {
@@ -150,6 +161,18 @@ async function init() {
     py = await loadPyodide({ indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/" });
     py.setStdout({ batched: s => write(s + "\n") });
     py.setStderr({ batched: s => write(s + "\n", "err") });
+    py.runPython(`
+import builtins
+from js import prompt
+def _input(p=""):
+    p = str(p)
+    r = prompt(p if p else " ")
+    if r is None:
+        raise KeyboardInterrupt
+    print(p + r)
+    return r
+builtins.input = _input
+`);
     status.textContent = "Hazırdır ✓";
     runBtn.disabled = false;
   } catch (e) {
@@ -159,12 +182,26 @@ async function init() {
 
 runBtn.onclick = async () => {
   runBtn.disabled = true;
+  errLine = 0; renderGutter();
   if (document.body.classList.contains("big")) setOut(true);
   out.textContent = "";
   try {
     await py.runPythonAsync(code.value);
   } catch (e) {
-    write(String(e.message || e), "err");
+    let msg = String(e.message || e);
+    if (msg.includes("KeyboardInterrupt")) msg = "Dayandırıldı";
+    else {
+      const i = msg.indexOf('File "<exec>"');
+      if (i > -1) {
+        const body = msg.slice(i).trimEnd();
+        const last = body.split("\n").pop();
+        const syn = /^(SyntaxError|IndentationError|TabError)/.test(last);
+        msg = (syn ? "  " : "Traceback (most recent call last):\n  ") + body;
+        const all = [...body.matchAll(/File "<exec>", line (\d+)/g)];
+        if (all.length) { errLine = +all[all.length - 1][1]; renderGutter(); }
+      }
+    }
+    write(msg + "\n", "err");
   }
   runBtn.disabled = false;
 };
@@ -172,6 +209,7 @@ $("clearOut").onclick = () => { out.textContent = ""; };
 $("clearCode").onclick = () => {
   if (code.value && !confirm("Kod silinsin?")) return;
   code.value = "";
+  errLine = 0;
   try { localStorage.removeItem("code"); } catch(e){}
   render();
   code.focus();
