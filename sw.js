@@ -1,4 +1,4 @@
-const CACHE = "pyide-v4";
+const CACHE = "pyide-v5";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon.png"];
 
 self.addEventListener("install", e => {
