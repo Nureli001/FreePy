@@ -156,17 +156,25 @@ $("expand").onclick = () => {
 };
 
 let py;
+let pending = "";
+window.__pyPending = () => {
+  const lines = pending.split("\n");
+  pending = "";
+  return lines.slice(-20).join("\n");
+};
 async function init() {
   try {
     py = await loadPyodide({ indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/" });
-    py.setStdout({ batched: s => write(s + "\n") });
+    py.setStdout({ batched: s => { write(s + "\n"); pending += s + "\n"; } });
     py.setStderr({ batched: s => write(s + "\n", "err") });
     py.runPython(`
 import builtins
 from js import prompt
 def _input(p=""):
     p = str(p)
-    r = prompt(p if p else " ")
+    import js
+    msg = js.__pyPending() + p
+    r = prompt(msg if msg else " ")
     if r is None:
         raise KeyboardInterrupt
     print(p + r)
@@ -185,6 +193,7 @@ runBtn.onclick = async () => {
   errLine = 0; renderGutter();
   if (document.body.classList.contains("big")) setOut(true);
   out.textContent = "";
+  pending = "";
   try {
     await py.runPythonAsync(code.value);
   } catch (e) {
