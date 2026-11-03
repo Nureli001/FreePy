@@ -1,1 +1,1 @@
-# FreePy
+# FreePy:Pulsuz ,Offline,Reklamsız Python 
