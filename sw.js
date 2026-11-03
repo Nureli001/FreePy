@@ -1,4 +1,4 @@
-const CACHE = "pyide-v5";
+const CACHE = "pyide-v7";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon.png"];
 
 self.addEventListener("install", e => {
@@ -13,6 +13,7 @@ self.addEventListener("activate", e => {
   );
 });
 
+// Cache-first: Pyodide faylları da ilk yüklənmədə keşlənir
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   e.respondWith(
