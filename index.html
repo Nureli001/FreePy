@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Python">
+<meta name="apple-mobile-web-app-title" content="Python IDLE">
 <meta name="theme-color" content="#1e1e2e">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon.png">
@@ -20,7 +20,7 @@
   button{background:#89b4fa;color:#1e1e2e;border:0;border-radius:8px;padding:10px 16px;font-size:16px;font-weight:600}
   button.sec{background:#45475a;color:#cdd6f4}
   button:disabled{opacity:.4}
-  button.sm{padding:6px 12px;font-size:18px;line-height:1}
+  button.sm{padding:8px 10px;line-height:0}
   #outBar{display:none;justify-content:space-between;align-items:center;background:#11111b;border:1px solid #45475a;border-radius:8px;padding:10px 12px;font-size:14px;color:#a6adc8}
   body.big #outBar{display:flex}
   body.big #out{display:none}
@@ -41,7 +41,7 @@
 </style>
 </head>
 <body>
-<header><h1>🐍 Python IDLE</h1><span id="status">Yüklənir…</span><button id="expand" class="sec sm" aria-label="Böyüt">⤢</button></header>
+<header><h1>🐍 Python </h1><span id="status">Yüklənir…</span><button id="expand" class="sec sm" aria-label="Böyüt"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></header>
 <div class="editor"><pre id="hl" aria-hidden="true"></pre><textarea id="code" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off">name = "Dünya"
 print(f"Salam, {name}!")
 
@@ -130,6 +130,8 @@ $("copy").onclick = async () => {
   setTimeout(() => btn.textContent = "Kodu kopyala", 1500);
 };
 
+const ICON_EXP = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+const ICON_MIN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
 function setOut(open) {
   document.body.classList.toggle("outopen", open);
   $("outArrow").textContent = open ? "▾" : "▴";
@@ -137,7 +139,7 @@ function setOut(open) {
 $("outBar").onclick = () => setOut(!document.body.classList.contains("outopen"));
 $("expand").onclick = () => {
   const big = document.body.classList.toggle("big");
-  $("expand").textContent = big ? "⤡" : "⤢";
+  $("expand").innerHTML = big ? ICON_MIN : ICON_EXP;
   if (!big) setOut(false);
   render();
 };
