@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Python IDLE">
+<meta name="theme-color" content="#1e1e2e">
+<meta name="color-scheme" content="dark">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.png">
+<title>Python IDLE</title>
+<style>
+  :root{color-scheme:dark}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:#1e1e2e;color:#cdd6f4;font-family:-apple-system,system-ui,sans-serif;
+    display:flex;flex-direction:column;padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom)}
+  header{display:flex;align-items:center;gap:8px;padding:10px 0}
+  h1{font-size:18px;margin:0;flex:1}
+  #status{font-size:12px;color:#a6adc8}
+  button{background:#89b4fa;color:#1e1e2e;border:0;border-radius:8px;padding:10px 16px;font-size:16px;font-weight:600}
+  button.sec{background:#45475a;color:#cdd6f4}
+  button{-webkit-tap-highlight-color:transparent;cursor:pointer}
+  button:active:not(:disabled){filter:brightness(1.25);transform:scale(.96)}
+  button:disabled{opacity:.4}
+  button.sm{padding:8px 10px;line-height:0}
+  #outBar{display:none;justify-content:space-between;align-items:center;background:#11111b;border:1px solid #45475a;border-radius:8px;padding:10px 12px;font-size:14px;color:#a6adc8}
+  body.big #outBar{display:flex}
+  body.big #out{display:none}
+  body.big.outopen #out{display:block;flex:none;height:35%}
+  button.ic{padding:10px 0;width:50px;font-size:16px;white-space:nowrap}
+  textarea,pre{font-family:ui-monospace,Menlo,monospace;font-size:15px;margin:0;width:100%}
+  .editor{flex:1;min-height:0;position:relative;background:#11111b;border:1px solid #45475a;border-radius:8px;overflow:hidden}
+  #hl,#code{position:absolute;inset:0;margin:0;padding:10px 10px 10px 50px;border:0;border-radius:0;font-size:16px;line-height:1.5;
+    white-space:pre;overflow-wrap:normal;tab-size:4;width:100%;height:100%}
+  #hl{overflow:hidden;pointer-events:none;color:#cdd6f4;background:transparent}
+  #code{background:transparent;color:transparent;caret-color:#cdd6f4;resize:none;z-index:1;overflow:auto;-webkit-text-fill-color:transparent}
+  #gutter{position:absolute;left:0;top:0;bottom:0;width:40px;box-sizing:border-box;overflow:hidden;background:#11111b;border-right:1px solid #313244;color:#6c7086;text-align:right;padding:10px 6px 10px 0;font-family:ui-monospace,Menlo,monospace;font-size:16px;line-height:1.5;white-space:pre;z-index:2;pointer-events:none}
+  #gutter .err{color:#f38ba8;font-weight:700}
+  #code::selection{background:rgba(137,180,250,.35)}
+  .k{color:#cba6f7}.s{color:#a6e3a1}.c{color:#6c7086;font-style:italic}.n{color:#fab387}
+  .b{color:#89b4fa}.o{color:#f38ba8}.d{color:#f9e2af}
+  .bar{display:flex;gap:8px;padding:8px 0}
+  pre{flex:1;min-height:0;background:#11111b;border:1px solid #45475a;padding:10px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+  .err{color:#f38ba8}
+  .ok{color:#6c7086}
+  #load{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:12px;color:#a6adc8}
+  #track{flex:1;height:6px;background:#313244;border-radius:3px;overflow:hidden}
+  #bar{height:100%;width:0;background:#89b4fa;transition:width .2s}
+  #pct{min-width:34px;text-align:right}
+  #saved{font-size:12px;color:#6c7086;text-align:right;padding:4px 2px 0;min-height:18px}
+</style>
+</head>
+<body>
+<header><h1>🐍 Python IDLE</h1><span id="status">Yüklənir…</span><button id="expand" class="sec sm" aria-label="Böyüt"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></header>
+<div id="load"><div id="track"><div id="bar"></div></div><span id="pct">0%</span></div>
+<div class="editor"><pre id="hl" aria-hidden="true"></pre><div id="gutter" aria-hidden="true"></div><textarea id="code" wrap="off" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off">name = "Dünya"
+print(f"Salam, {name}!")
+
+for i in range(1, 6):
+    print(i, "x", i, "=", i * i)</textarea></div>
+<div id="saved">Avtomatik saxlanır</div>
+<div class="bar">
+  <button id="run" disabled title="Ctrl+Enter">Yüklənir…</button>
+  <button id="copy" class="sec">Kodu kopyala</button>
+  <button id="clearCode" class="sec ic" aria-label="Kodu sil">↑🗑</button>
+  <button id="clearOut" class="sec ic" aria-label="Nəticəni sil">↓🗑</button>
+</div>
+<div id="outBar"><span>Nəticə</span><span id="outArrow">▴</span></div>
+<pre id="out"></pre>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const code = $("code"), out = $("out"), runBtn = $("run"), status = $("status");
+
+try { const s = localStorage.getItem("code"); if (s) code.value = s; } catch(e){}
+const saved = $("saved");
+let saveTimer = 0, dirty = false;
+function saveNow() {
+  clearTimeout(saveTimer);
+  dirty = false;
+  try {
+    localStorage.setItem("code", code.value);
+    const d = new Date();
+    saved.textContent = "Son dəyişiklik saxlanıldı · " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  } catch (e) { saved.textContent = "Saxlamaq mümkün olmadı"; }
+}
+code.addEventListener("input", () => {
+  dirty = true;
+  saved.textContent = "Yazılır…";
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveNow, 500);
+});
+document.addEventListener("visibilitychange", () => { if (document.hidden && dirty) saveNow(); });
+window.addEventListener("pagehide", () => { if (dirty) saveNow(); });
+
+code.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+    e.preventDefault();
+    if (!runBtn.disabled) runBtn.click();
+    return;
+  }
+  if (e.key === "Tab") {
+    e.preventDefault();
+    const s = code.selectionStart;
+    code.setRangeText("    ", s, code.selectionEnd, "end");
+    code.dispatchEvent(new Event("input"));
+  }
+});
+
+function write(text, cls) {
+  const span = document.createElement("span");
+  if (cls) span.className = cls;
+  span.textContent = text;
+  out.appendChild(span);
+  out.scrollTop = out.scrollHeight;
+}
+
+
+const hl = $("hl");
+const KW = new Set("False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield match case".split(" "));
+const BI = new Set("print input len range int float str bool list dict set tuple type isinstance sum min max abs round sorted reversed enumerate zip map filter open any all chr ord repr format iter next id hash dir vars getattr setattr hasattr super object Exception ValueError TypeError KeyError IndexError".split(" "));
+const CONST = new Set(["True","False","None"]);
+const esc = t => t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const RE = /("""[\s\S]*?(?:"""|$)|\'\'\'[\s\S]*?(?:\'\'\'|$)|[rRbBfFuU]{0,2}(?:"(?:\\.|[^"\\\n])*"?|\'(?:\\.|[^\'\\\n])*\'?))|(#[^\n]*)|(\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|(@\w+)|\b([A-Za-z_]\w*)\b/g;
+
+function highlight(src) {
+  let out = "", last = 0, prev = "", m;
+  RE.lastIndex = 0;
+  while ((m = RE.exec(src)) !== null) {
+    if (m[0] === "") { RE.lastIndex++; continue; }
+    out += esc(src.slice(last, m.index));
+    const t = esc(m[0]);
+    if (m[1]) out += `<span class="s">${t}</span>`;
+    else if (m[2]) out += `<span class="c">${t}</span>`;
+    else if (m[3]) out += `<span class="n">${t}</span>`;
+    else if (m[4]) out += `<span class="d">${t}</span>`;
+    else if (m[5]) {
+      const w = m[5];
+      if (CONST.has(w)) out += `<span class="o">${t}</span>`;
+      else if (KW.has(w)) out += `<span class="k">${t}</span>`;
+      else if (prev === "def" || prev === "class") out += `<span class="d">${t}</span>`;
+      else if (BI.has(w)) out += `<span class="b">${t}</span>`;
+      else out += t;
+      prev = w;
+    }
+    last = RE.lastIndex;
+  }
+  return out + esc(src.slice(last)) + "\n ";
+}
+const gut = $("gutter");
+let errLines = new Set();
+function renderGutter() {
+  const n = code.value.split("\n").length;
+  let h = "";
+  for (let i = 1; i <= n; i++) h += (errLines.has(i) ? '<span class="err">' + i + "</span>" : i) + "\n";
+  gut.innerHTML = h;
+  gut.scrollTop = code.scrollTop;
+}
+function render() { hl.innerHTML = highlight(code.value); hl.scrollTop = code.scrollTop; hl.scrollLeft = code.scrollLeft; renderGutter(); }
+code.addEventListener("input", () => { errLines = new Set(); render(); });
+code.addEventListener("scroll", () => { hl.scrollTop = code.scrollTop; hl.scrollLeft = code.scrollLeft; gut.scrollTop = code.scrollTop; });
+render();
+
+$("copy").onclick = async () => {
+  const btn = $("copy");
+  try {
+    await navigator.clipboard.writeText(code.value);
+  } catch (e) {
+    code.focus(); code.select(); document.execCommand("copy");
+    code.setSelectionRange(code.value.length, code.value.length);
+  }
+  btn.textContent = "Kopyalandı ✓";
+  setTimeout(() => btn.textContent = "Kodu kopyala", 1500);
+};
+
+const ICON_EXP = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+const ICON_MIN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+function setOut(open) {
+  document.body.classList.toggle("outopen", open);
+  $("outArrow").textContent = open ? "▾" : "▴";
+}
+$("outBar").onclick = () => setOut(!document.body.classList.contains("outopen"));
+$("expand").onclick = () => {
+  const big = document.body.classList.toggle("big");
+  $("expand").innerHTML = big ? ICON_MIN : ICON_EXP;
+  if (!big) setOut(false);
+  render();
+};
+
+const APP_VERSION = "v15";
+const bar = $("bar"), pct = $("pct"), loadEl = $("load");
+let py;
+function setProgress(p) {
+  p = Math.max(0, Math.min(100, Math.round(p)));
+  bar.style.width = p + "%";
+  pct.textContent = p + "%";
+  if (!py) runBtn.textContent = "Yüklənir… " + p + "%";
+}
+async function waitSW() {
+  if (!("serviceWorker" in navigator)) return;
+  try {
+    await Promise.race([navigator.serviceWorker.ready, new Promise(r => setTimeout(r, 4000))]);
+    if (!navigator.serviceWorker.controller) {
+      await new Promise(r => {
+        navigator.serviceWorker.addEventListener("controllerchange", r, { once: true });
+        setTimeout(r, 1500);
+      });
+    }
+  } catch (e) {}
+}
+async function preload() {
+  const base = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
+  const files = [["pyodide.asm.wasm", 9.2e6], ["python_stdlib.zip", 2.3e6], ["pyodide.asm.js", 0.4e6], ["pyodide-lock.json", 0.2e6]];
+  const total = files.reduce((a, f) => a + f[1], 0);
+  let loaded = 0;
+  for (const f of files) {
+    const res = await fetch(base + f[0]);
+    if (!res.ok || !res.body) continue;
+    const reader = res.body.getReader();
+    for (;;) {
+      const r = await reader.read();
+      if (r.done) break;
+      loaded += r.value.length;
+      setProgress(Math.min(99, loaded / total * 100));
+    }
+  }
+}
+let pending = "";
+window.__pyPending = () => {
+  const lines = pending.split("\n");
+  pending = "";
+  return lines.slice(-20).join("\n");
+};
+async function init() {
+  try {
+    setProgress(0);
+    await waitSW();
+    try { await preload(); } catch (e) {}
+    py = await loadPyodide({ indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/" });
+    py.setStdout({ batched: s => { write(s + "\n"); pending += s + "\n"; } });
+    py.setStderr({ batched: s => write(s + "\n", "err") });
+    py.runPython(`
+import builtins
+from js import prompt
+def _input(p=""):
+    p = str(p)
+    import js
+    msg = js.__pyPending() + p
+    r = prompt(msg if msg else " ")
+    if r is None:
+        raise KeyboardInterrupt
+    print(p + r)
+    return r
+builtins.input = _input
+
+import ast, json, traceback
+_HDR = {"if": "if 1:", "elif": "elif 1:", "else": "else:", "for": "for _ in ():", "while": "while 0:", "def": "def _():", "class": "class _:", "try": "try:", "except": "except:", "finally": "finally:", "with": "with _:", "async": "async def _():", "match": "match 0:", "case": "case _:"}
+def _syntax_errors(src):
+    lines = src.split(chr(10))
+    out = []
+    seen = set()
+    for _ in range(15):
+        try:
+            compile(chr(10).join(lines), "<exec>", "exec", flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
+            break
+        except SyntaxError as e:
+            n = e.lineno or 0
+            if n < 1 or n > len(lines) or n in seen:
+                if not out:
+                    out.append([n, "".join(traceback.format_exception_only(type(e), e))])
+                break
+            out.append([n, "".join(traceback.format_exception_only(type(e), e))])
+            msg = str(e.msg)
+            if "never closed" in msg or "EOF" in msg:
+                break
+            seen.add(n)
+            old = lines[n - 1]
+            ind = old[:len(old) - len(old.lstrip())]
+            word = old.strip().split(" ")[0].split(":")[0].split("(")[0]
+            lines[n - 1] = ind + _HDR.get(word, "pass")
+    return json.dumps(out)
+`);
+    setProgress(100);
+    loadEl.style.display = "none";
+    status.textContent = "Hazırdır ✓ · " + APP_VERSION;
+    runBtn.textContent = "▶ İşlət";
+    runBtn.disabled = false;
+  } catch (e) {
+    loadEl.style.display = "none";
+    status.textContent = "Yüklənmədi. İnternetə qoşul.";
+    runBtn.textContent = "↻ Yenidən yüklə";
+    runBtn.disabled = false;
+  }
+}
+
+runBtn.onclick = async () => {
+  if (!py) { location.reload(); return; }
+  runBtn.disabled = true;
+  try { await runCode(); }
+  catch (e) { write("Daxili xəta: " + String((e && e.message) || e) + "\n", "err"); }
+  runBtn.disabled = false;
+};
+async function runCode() {
+  const t0 = performance.now();
+  errLines = new Set(); renderGutter();
+  if (document.body.classList.contains("big")) setOut(true);
+  out.textContent = "";
+  pending = "";
+  let errs = [];
+  try { errs = JSON.parse(py.globals.get("_syntax_errors")(code.value)); } catch (e) {}
+  errs.sort((x, y) => x[0] - y[0]);
+  if (errs.length) {
+    errLines = new Set(errs.map(x => x[0]).filter(Boolean));
+    renderGutter();
+    errs.forEach(x => write(x[1].trimEnd() + "\n\n", "err"));
+    runBtn.disabled = false;
+    return;
+  }
+  try {
+    await py.runPythonAsync(code.value);
+    write("✓ Bitdi · " + ((performance.now() - t0) / 1000).toFixed(2) + " san\n", "ok");
+  } catch (e) {
+    let msg = String(e.message || e);
+    if (msg.includes("KeyboardInterrupt")) msg = "Dayandırıldı";
+    else {
+      const i = msg.indexOf('File "<exec>"');
+      if (i > -1) {
+        const body = msg.slice(i).trimEnd();
+        const last = body.split("\n").pop();
+        const syn = /^(SyntaxError|IndentationError|TabError)/.test(last);
+        msg = (syn ? "  " : "Traceback (most recent call last):\n  ") + body;
+        const all = [...body.matchAll(/File "<exec>", line (\d+)/g)];
+        if (all.length) { errLines = new Set(all.map(m => +m[1])); renderGutter(); }
+      }
+    }
+    write(msg + "\n", "err");
+  }
+}
+$("clearOut").onclick = () => { out.textContent = ""; };
+$("clearCode").onclick = () => {
+  if (code.value && !confirm("Kod silinsin?")) return;
+  code.value = "";
+  errLines = new Set();
+  try { localStorage.removeItem("code"); } catch(e){}
+  clearTimeout(saveTimer); dirty = false;
+  saved.textContent = "Avtomatik saxlanır";
+  render();
+  code.focus();
+};
+
+window.addEventListener("error", e => write("JS xətası: " + e.message + "\n", "err"));
+window.addEventListener("unhandledrejection", e => write("JS xətası: " + String((e.reason && e.reason.message) || e.reason) + "\n", "err"));
+
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+if ("serviceWorker" in navigator) {
+  const had = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (had && !reloaded) { reloaded = true; location.reload(); }
+  });
+  navigator.serviceWorker.register("sw.js").then(r => r.update()).catch(() => {});
+}
+init();
+</script>
+</body>
+</html>
