@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Python IDLE">
+<meta name="theme-color" content="#1e1e2e">
+<meta name="color-scheme" content="dark">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.png">
+<title>Python IDLE</title>
+<style>
+  :root{color-scheme:dark}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:#1e1e2e;color:#cdd6f4;font-family:-apple-system,system-ui,sans-serif;
+    display:flex;flex-direction:column;padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom)}
+  header{display:flex;align-items:center;gap:8px;padding:10px 0}
+  h1{font-size:18px;margin:0;flex:1}
+  #status{font-size:12px;color:#a6adc8;white-space:pre-line;text-align:right;line-height:1.25}
+  button{background:#89b4fa;color:#1e1e2e;border:0;border-radius:8px;padding:10px 16px;font-size:16px;font-weight:600}
+  button.sec{background:#45475a;color:#cdd6f4}
+  button{-webkit-tap-highlight-color:transparent;cursor:pointer}
+  button:active:not(:disabled){filter:brightness(1.25);transform:scale(.96)}
+  button:disabled{opacity:.4}
+  button.sm{padding:8px 10px;line-height:0}
+  #outBar{display:none;justify-content:space-between;align-items:center;background:#11111b;border:1px solid #45475a;border-radius:8px;padding:10px 12px;font-size:14px;color:#a6adc8}
+  body.big #outBar{display:flex}
+  body.big #out{display:none}
+  body.big.outopen #out{display:block;flex:none;height:35%}
+  button.ic{padding:10px 0;width:50px;font-size:16px;white-space:nowrap}
+  textarea,pre{font-family:ui-monospace,Menlo,monospace;font-size:15px;margin:0;width:100%}
+  .editor{flex:1;min-height:0;position:relative;background:#11111b;border:1px solid #45475a;border-radius:8px;overflow:hidden}
+  #hl,#code{position:absolute;inset:0;margin:0;padding:10px 10px 10px 50px;border:0;border-radius:0;font-size:16px;line-height:1.5;
+    white-space:pre;overflow-wrap:normal;tab-size:4;width:100%;height:100%}
+  #hl{overflow:hidden;pointer-events:none;color:#cdd6f4;background:transparent}
+  #code{background:transparent;color:transparent;caret-color:#cdd6f4;resize:none;z-index:1;overflow:auto;-webkit-text-fill-color:transparent}
+  #gutter{position:absolute;left:0;top:0;bottom:0;width:40px;box-sizing:border-box;overflow:hidden;background:#11111b;border-right:1px solid #313244;color:#6c7086;text-align:right;padding:10px 6px 10px 0;font-family:ui-monospace,Menlo,monospace;font-size:16px;line-height:1.5;white-space:pre;z-index:2;pointer-events:none}
+  #gutter .err{color:#f38ba8;font-weight:700}
+  #code::selection{background:rgba(137,180,250,.35)}
+  .k{color:#cba6f7}.s{color:#a6e3a1}.c{color:#6c7086;font-style:italic}.n{color:#fab387}
+  .b{color:#89b4fa}.o{color:#f38ba8}.d{color:#f9e2af}
+  .bar{display:flex;gap:8px;padding:8px 0}
+  pre{flex:1;min-height:0;background:#11111b;border:1px solid #45475a;padding:10px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+  .err{color:#f38ba8}
+  .ok{color:#6c7086}
+  #load{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:12px;color:#a6adc8}
+  #track{flex:1;height:6px;background:#313244;border-radius:3px;overflow:hidden}
+  #bar{height:100%;width:0;background:#89b4fa;transition:width .2s}
+  #pct{min-width:34px;text-align:right}
+  #meta{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 2px 0;min-height:26px}
+  #saved{font-size:12px;color:#6c7086;text-align:right}
+  button.mini{background:transparent;border:1px solid #45475a;color:#a6adc8;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:500;flex:none}
+  button.mini b{color:#cdd6f4}
+</style>
+</head>
+<body>
+<header><h1>🐍 Python IDLE</h1><span id="status">Yüklənir…</span><button id="expand" class="sec sm" aria-label="Böyüt"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></header>
+<div id="load"><div id="track"><div id="bar"></div></div><span id="pct">0%</span></div>
+<div class="editor"><pre id="hl" aria-hidden="true"></pre><div id="gutter" aria-hidden="true"></div><textarea id="code" wrap="off" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off">name = "Dünya"
+print(f"Salam, {name}!")
+
+for i in range(1, 6):
+    print(i, "x", i, "=", i * i)</textarea></div>
+<div id="meta"><button id="lang" class="mini" aria-label="Language / Dil"><b>AZ</b> · EN</button><span id="saved">Avtomatik saxlanır</span></div>
+<div class="bar">
+  <button id="run" disabled title="Ctrl+Enter">Yüklənir…</button>
+  <button id="copy" class="sec">Kodu kopyala</button>
+  <button id="clearCode" class="sec ic" aria-label="Kodu sil">↑🗑</button>
+  <button id="clearOut" class="sec ic" aria-label="Nəticəni sil">↓🗑</button>
+</div>
+<div id="outBar"><span id="outLabel">Nəticə</span><span id="outArrow">▴</span></div>
+<pre id="out"></pre>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const code = $("code"), out = $("out"), runBtn = $("run"), status = $("status");
+
+try { const s = localStorage.getItem("code"); if (s) code.value = s; } catch(e){}
+const saved = $("saved");
+
+const I18N = {
+  az: {
+    loading: "Yüklənir…", run: "İşlət", running: "İşləyir…", reload: "Yenidən yüklə",
+    copy: "Kodu kopyala", copied: "Kopyalandı ✓", clearCodeLabel: "Kodu sil", clearOutLabel: "Nəticəni sil", expand: "Böyüt",
+    output: "Nəticə", ready: "Hazırdır ✓", loadFailed: "Yüklənmədi. İnternetə qoşul.", offFetching: "Offline fayllar yüklənir…",
+    savedIdle: "Avtomatik saxlanır", typing: "Yazılır…", savedAt: "Son dəyişiklik saxlanıldı · ", saveFail: "Saxlamaq mümkün olmadı",
+    confirmClear: "Kod silinsin?", stopped: "Dayandırıldı", done: "Bitdi", sec: "san",
+    slow: "… hələ işləyir. Çox çəkirsə səhifəni yeniləyib yenidən cəhd et.", innerErr: "Daxili xəta: ", jsErr: "JS xətası: ",
+    r_swUnsupported: "SW dəstəklənmir (gizli rejim?)", r_swNoControl: "SW idarə etmir", r_missing: "çatışmır: ", r_noIndex: "index keşdə yoxdur", r_checkErr: "yoxlama xətası: ",
+    s_wait: "qeydiyyat gözlənilir", s_reg: "qeydiyyat OK, SW ", s_none: "yoxdur", s_state: "SW ", s_redundant: " (quraşdırma alınmadı)",
+    s_private: "gizli sekmədir? adi sekmədə aç", s_err: "xəta: "
+  },
+  en: {
+    loading: "Loading…", run: "Run", running: "Running…", reload: "Reload",
+    copy: "Copy code", copied: "Copied ✓", clearCodeLabel: "Clear code", clearOutLabel: "Clear output", expand: "Expand",
+    output: "Output", ready: "Ready ✓", loadFailed: "Failed to load. Connect to the internet.", offFetching: "Downloading offline files…",
+    savedIdle: "Auto-save is on", typing: "Typing…", savedAt: "Last change saved · ", saveFail: "Could not save",
+    confirmClear: "Clear the code?", stopped: "Stopped", done: "Done", sec: "s",
+    slow: "… still running. If it takes too long, reload the page and try again.", innerErr: "Internal error: ", jsErr: "JS error: ",
+    r_swUnsupported: "SW not supported (private mode?)", r_swNoControl: "SW is not controlling the page", r_missing: "missing: ", r_noIndex: "index is not cached", r_checkErr: "check error: ",
+    s_wait: "waiting for registration", s_reg: "registered OK, SW ", s_none: "none", s_state: "SW ", s_redundant: " (install failed)",
+    s_private: "private tab? open in a normal tab", s_err: "error: "
+  }
+};
+const DEFAULT_CODE = {
+  az: 'name = "Dünya"\nprint(f"Salam, {name}!")\n\nfor i in range(1, 6):\n    print(i, "x", i, "=", i * i)',
+  en: 'name = "World"\nprint(f"Hello, {name}!")\n\nfor i in range(1, 6):\n    print(i, "x", i, "=", i * i)'
+};
+let lang = "az";
+try { const l = localStorage.getItem("lang"); if (l === "az" || l === "en") lang = l; } catch (e) {}
+const T = k => (I18N[lang] && I18N[lang][k]) || I18N.az[k] || k;
+
+let phase = "loading", runPhase = "loading", loadPct = 0;
+let savedState = { kind: "idle" };
+let offState = { kind: "none" };
+let swInfo = { k: "wait" };
+let copyFlash = false;
+
+function swInfoText() {
+  if (swInfo.k === "reg") return T("s_reg") + (swInfo.a || T("s_none"));
+  if (swInfo.k === "state") return T("s_state") + swInfo.a + (swInfo.a === "redundant" ? T("s_redundant") : "");
+  if (swInfo.k === "private") return T("s_private");
+  if (swInfo.k === "err") return T("s_err") + swInfo.a;
+  return T("s_wait");
+}
+function reasonText(r) {
+  if (r.k === "swUnsupported") return T("r_swUnsupported");
+  if (r.k === "swNoControl") return T("r_swNoControl") + " · " + swInfoText();
+  if (r.k === "missing") return T("r_missing") + r.a;
+  if (r.k === "noIndex") return T("r_noIndex");
+  return T("r_checkErr") + (r.a || "");
+}
+function renderStatus() {
+  if (phase === "loading") { status.textContent = T("loading"); return; }
+  if (phase === "failed") { status.textContent = T("loadFailed"); return; }
+  const base = T("ready") + " · " + APP_VERSION;
+  let line = "";
+  if (offState.kind === "fetching") line = T("offFetching");
+  else if (offState.kind === "ok") line = "Offline ✓";
+  else if (offState.kind === "fail") line = "Offline ✗ · " + reasonText(offState.reason);
+  status.textContent = line ? base + "\n" + line : base;
+}
+function renderRun() {
+  if (runPhase === "loading") runBtn.textContent = T("loading") + " " + loadPct + "%";
+  else if (runPhase === "running") runBtn.textContent = T("running");
+  else if (runPhase === "failed") runBtn.textContent = "↻ " + T("reload");
+  else runBtn.textContent = "▶ " + T("run");
+}
+function renderSaved() {
+  if (savedState.kind === "typing") saved.textContent = T("typing");
+  else if (savedState.kind === "saved") saved.textContent = T("savedAt") + savedState.time;
+  else if (savedState.kind === "fail") saved.textContent = T("saveFail");
+  else saved.textContent = T("savedIdle");
+}
+function renderCopy() { $("copy").textContent = copyFlash ? T("copied") : T("copy"); }
+function applyLang() {
+  document.documentElement.lang = lang;
+  $("lang").innerHTML = lang === "az" ? "<b>AZ</b> · EN" : "AZ · <b>EN</b>";
+  $("expand").setAttribute("aria-label", T("expand"));
+  $("clearCode").setAttribute("aria-label", T("clearCodeLabel"));
+  $("clearOut").setAttribute("aria-label", T("clearOutLabel"));
+  $("outLabel").textContent = T("output");
+  renderStatus(); renderRun(); renderSaved(); renderCopy();
+}
+if (lang !== "az" && code.value.trim() === DEFAULT_CODE.az.trim()) code.value = DEFAULT_CODE[lang];
+let saveTimer = 0, dirty = false;
+function saveNow() {
+  clearTimeout(saveTimer);
+  dirty = false;
+  try {
+    localStorage.setItem("code", code.value);
+    const d = new Date();
+    savedState = { kind: "saved", time: String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") };
+  } catch (e) { savedState = { kind: "fail" }; }
+  renderSaved();
+}
+code.addEventListener("input", () => {
+  dirty = true;
+  savedState = { kind: "typing" }; renderSaved();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveNow, 500);
+});
+document.addEventListener("visibilitychange", () => { if (document.hidden && dirty) saveNow(); });
+window.addEventListener("pagehide", () => { if (dirty) saveNow(); });
+
+code.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+    e.preventDefault();
+    if (!runBtn.disabled) runBtn.click();
+    return;
+  }
+  if (e.key === "Tab") {
+    e.preventDefault();
+    const s = code.selectionStart;
+    code.setRangeText("    ", s, code.selectionEnd, "end");
+    code.dispatchEvent(new Event("input"));
+  }
+});
+
+function write(text, cls) {
+  const span = document.createElement("span");
+  if (cls) span.className = cls;
+  span.textContent = text;
+  out.appendChild(span);
+  out.scrollTop = out.scrollHeight;
+}
+
+
+const hl = $("hl");
+const KW = new Set("False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield match case".split(" "));
+const BI = new Set("print input len range int float str bool list dict set tuple type isinstance sum min max abs round sorted reversed enumerate zip map filter open any all chr ord repr format iter next id hash dir vars getattr setattr hasattr super object Exception ValueError TypeError KeyError IndexError".split(" "));
+const CONST = new Set(["True","False","None"]);
+const esc = t => t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const RE = /("""[\s\S]*?(?:"""|$)|\'\'\'[\s\S]*?(?:\'\'\'|$)|[rRbBfFuU]{0,2}(?:"(?:\\.|[^"\\\n])*"?|\'(?:\\.|[^\'\\\n])*\'?))|(#[^\n]*)|(\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|(@\w+)|\b([A-Za-z_]\w*)\b/g;
+
+function highlight(src) {
+  let out = "", last = 0, prev = "", m;
+  RE.lastIndex = 0;
+  while ((m = RE.exec(src)) !== null) {
+    if (m[0] === "") { RE.lastIndex++; continue; }
+    out += esc(src.slice(last, m.index));
+    const t = esc(m[0]);
+    if (m[1]) out += `<span class="s">${t}</span>`;
+    else if (m[2]) out += `<span class="c">${t}</span>`;
+    else if (m[3]) out += `<span class="n">${t}</span>`;
+    else if (m[4]) out += `<span class="d">${t}</span>`;
+    else if (m[5]) {
+      const w = m[5];
+      if (CONST.has(w)) out += `<span class="o">${t}</span>`;
+      else if (KW.has(w)) out += `<span class="k">${t}</span>`;
+      else if (prev === "def" || prev === "class") out += `<span class="d">${t}</span>`;
+      else if (BI.has(w)) out += `<span class="b">${t}</span>`;
+      else out += t;
+      prev = w;
+    }
+    last = RE.lastIndex;
+  }
+  return out + esc(src.slice(last)) + "\n ";
+}
+const gut = $("gutter");
+let errLines = new Set();
+function renderGutter() {
+  const n = code.value.split("\n").length;
+  let h = "";
+  for (let i = 1; i <= n; i++) h += (errLines.has(i) ? '<span class="err">' + i + "</span>" : i) + "\n";
+  gut.innerHTML = h;
+  gut.scrollTop = code.scrollTop;
+}
+function render() { hl.innerHTML = highlight(code.value); hl.scrollTop = code.scrollTop; hl.scrollLeft = code.scrollLeft; renderGutter(); }
+code.addEventListener("input", () => { errLines = new Set(); render(); });
+code.addEventListener("scroll", () => { hl.scrollTop = code.scrollTop; hl.scrollLeft = code.scrollLeft; gut.scrollTop = code.scrollTop; });
+render();
+applyLang();
+
+$("copy").onclick = async () => {
+  const btn = $("copy");
+  try {
+    await navigator.clipboard.writeText(code.value);
+  } catch (e) {
+    code.focus(); code.select(); document.execCommand("copy");
+    code.setSelectionRange(code.value.length, code.value.length);
+  }
+  copyFlash = true; renderCopy();
+  setTimeout(() => { copyFlash = false; renderCopy(); }, 1500);
+};
+
+const ICON_EXP = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+const ICON_MIN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+function setOut(open) {
+  document.body.classList.toggle("outopen", open);
+  $("outArrow").textContent = open ? "▾" : "▴";
+}
+$("outBar").onclick = () => setOut(!document.body.classList.contains("outopen"));
+$("expand").onclick = () => {
+  const big = document.body.classList.toggle("big");
+  $("expand").innerHTML = big ? ICON_MIN : ICON_EXP;
+  if (!big) setOut(false);
+  render();
+};
+
+const APP_VERSION = "v20";
+const bar = $("bar"), pct = $("pct"), loadEl = $("load");
+let py;
+function setProgress(p) {
+  p = Math.max(0, Math.min(100, Math.round(p)));
+  bar.style.width = p + "%";
+  pct.textContent = p + "%";
+  loadPct = p;
+  if (!py) { runPhase = "loading"; renderRun(); }
+}
+const PYO_BASE = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
+const PYO_NAMES = ["pyodide.js", "pyodide.asm.js", "pyodide.asm.wasm", "python_stdlib.zip", "pyodide-lock.json"];
+async function offlineReason() {
+  try {
+    if (!("serviceWorker" in navigator)) return { k: "swUnsupported" };
+    if (!navigator.serviceWorker.controller) return { k: "swNoControl" };
+    for (const n of PYO_NAMES) {
+      if (!(await caches.match(PYO_BASE + n))) return { k: "missing", a: n.replace("pyodide.", "").replace("python_", "") };
+    }
+    if (!(await caches.match("./index.html"))) return { k: "noIndex" };
+    return null;
+  } catch (e) { return { k: "checkErr", a: String((e && e.message) || e) }; }
+}
+async function checkOffline() {
+  let refetched = false;
+  for (const wait of [0, 3000, 8000, 15000]) {
+    if (wait) await new Promise(r => setTimeout(r, wait));
+    let r = await offlineReason();
+    if (r && r.k === "swNoControl" && wait >= 3000) {
+      try {
+        if (!sessionStorage.getItem("swReload")) { sessionStorage.setItem("swReload", "1"); location.reload(); return; }
+      } catch (e) {}
+    }
+    if (r && r.k === "missing" && !refetched) {
+      refetched = true;
+      offState = { kind: "fetching" }; renderStatus();
+      try { await preload(); } catch (e) {}
+      r = await offlineReason();
+    }
+    offState = r ? { kind: "fail", reason: r } : { kind: "ok" };
+    renderStatus();
+    if (!r) return;
+  }
+}
+async function waitSW() {
+  if (!("serviceWorker" in navigator)) return;
+  try {
+    await Promise.race([navigator.serviceWorker.ready, new Promise(r => setTimeout(r, 4000))]);
+    if (!navigator.serviceWorker.controller) {
+      await new Promise(r => {
+        navigator.serviceWorker.addEventListener("controllerchange", r, { once: true });
+        setTimeout(r, 1500);
+      });
+    }
+  } catch (e) {}
+}
+async function preload() {
+  const base = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
+  const files = [["pyodide.js", 0.02e6], ["pyodide.asm.wasm", 9.2e6], ["python_stdlib.zip", 2.3e6], ["pyodide.asm.js", 0.4e6], ["pyodide-lock.json", 0.2e6]];
+  const total = files.reduce((a, f) => a + f[1], 0);
+  let loaded = 0;
+  for (const f of files) {
+    const res = await fetch(base + f[0]);
+    if (!res.ok || !res.body) continue;
+    const reader = res.body.getReader();
+    for (;;) {
+      const r = await reader.read();
+      if (r.done) break;
+      loaded += r.value.length;
+      setProgress(Math.min(99, loaded / total * 100));
+    }
+  }
+}
+let pending = "";
+let usedInput = false;
+window.__pyPending = () => {
+  usedInput = true;
+  const lines = pending.split("\n");
+  pending = "";
+  return lines.slice(-20).join("\n");
+};
+async function init() {
+  try {
+    setProgress(0);
+    await waitSW();
+    try { await preload(); } catch (e) {}
+    py = await loadPyodide({ indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/" });
+    py.setStdout({ batched: s => { write(s + "\n"); pending += s + "\n"; } });
+    py.setStderr({ batched: s => write(s + "\n", "err") });
+    py.runPython(`
+import builtins
+from js import prompt
+def _input(p=""):
+    p = str(p)
+    import js
+    msg = js.__pyPending() + p
+    r = prompt(msg if msg else " ")
+    if r is None:
+        raise KeyboardInterrupt
+    print(p + r)
+    return r
+builtins.input = _input
+
+import ast, json, traceback
+_HDR = {"if": "if 1:", "elif": "elif 1:", "else": "else:", "for": "for _ in ():", "while": "while 0:", "def": "def _():", "class": "class _:", "try": "try:", "except": "except:", "finally": "finally:", "with": "with _:", "async": "async def _():", "match": "match 0:", "case": "case _:"}
+def _syntax_errors(src):
+    lines = src.split(chr(10))
+    out = []
+    seen = set()
+    for _ in range(15):
+        try:
+            compile(chr(10).join(lines), "<exec>", "exec", flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
+            break
+        except SyntaxError as e:
+            n = e.lineno or 0
+            if n < 1 or n > len(lines) or n in seen:
+                if not out:
+                    out.append([n, "".join(traceback.format_exception_only(type(e), e))])
+                break
+            out.append([n, "".join(traceback.format_exception_only(type(e), e))])
+            msg = str(e.msg)
+            if "never closed" in msg or "EOF" in msg:
+                break
+            seen.add(n)
+            old = lines[n - 1]
+            ind = old[:len(old) - len(old.lstrip())]
+            word = old.strip().split(" ")[0].split(":")[0].split("(")[0]
+            lines[n - 1] = ind + _HDR.get(word, "pass")
+    return json.dumps(out)
+`);
+    setProgress(100);
+    loadEl.style.display = "none";
+    phase = "ready"; runPhase = "ready";
+    renderStatus(); renderRun();
+    checkOffline();
+    runBtn.disabled = false;
+  } catch (e) {
+    loadEl.style.display = "none";
+    phase = "failed"; runPhase = "failed";
+    renderStatus(); renderRun();
+    runBtn.disabled = false;
+  }
+}
+
+runBtn.onclick = async () => {
+  if (!py) { location.reload(); return; }
+  runBtn.disabled = true;
+  runPhase = "running"; renderRun();
+  usedInput = false;
+  const slow = setTimeout(() => {
+    if (!usedInput) write(T("slow") + "\n", "ok");
+  }, 6000);
+  try { await runCode(); }
+  catch (e) { write(T("innerErr") + String((e && e.message) || e) + "\n", "err"); }
+  clearTimeout(slow);
+  runPhase = "ready"; renderRun();
+  runBtn.disabled = false;
+};
+async function runCode() {
+  const t0 = performance.now();
+  errLines = new Set(); renderGutter();
+  if (document.body.classList.contains("big")) setOut(true);
+  out.textContent = "";
+  pending = "";
+  let errs = [];
+  try { errs = JSON.parse(py.globals.get("_syntax_errors")(code.value)); } catch (e) {}
+  errs.sort((x, y) => x[0] - y[0]);
+  if (errs.length) {
+    errLines = new Set(errs.map(x => x[0]).filter(Boolean));
+    renderGutter();
+    errs.forEach(x => write(x[1].trimEnd() + "\n\n", "err"));
+    runBtn.disabled = false;
+    return;
+  }
+  try {
+    await py.runPythonAsync(code.value);
+    write("✓ " + T("done") + " · " + ((performance.now() - t0) / 1000).toFixed(2) + " " + T("sec") + "\n", "ok");
+  } catch (e) {
+    let msg = String(e.message || e);
+    if (msg.includes("KeyboardInterrupt")) msg = T("stopped");
+    else {
+      const i = msg.indexOf('File "<exec>"');
+      if (i > -1) {
+        const body = msg.slice(i).trimEnd();
+        const last = body.split("\n").pop();
+        const syn = /^(SyntaxError|IndentationError|TabError)/.test(last);
+        msg = (syn ? "  " : "Traceback (most recent call last):\n  ") + body;
+        const all = [...body.matchAll(/File "<exec>", line (\d+)/g)];
+        if (all.length) { errLines = new Set(all.map(m => +m[1])); renderGutter(); }
+      }
+    }
+    write(msg + "\n", "err");
+  }
+}
+$("clearOut").onclick = () => { out.textContent = ""; };
+$("lang").onclick = () => {
+  const old = lang;
+  lang = lang === "az" ? "en" : "az";
+  try { localStorage.setItem("lang", lang); } catch (e) {}
+  if (code.value.trim() === DEFAULT_CODE[old].trim()) { code.value = DEFAULT_CODE[lang]; errLines = new Set(); render(); }
+  applyLang();
+};
+$("clearCode").onclick = () => {
+  if (code.value && !confirm(T("confirmClear"))) return;
+  code.value = "";
+  errLines = new Set();
+  try { localStorage.removeItem("code"); } catch(e){}
+  clearTimeout(saveTimer); dirty = false;
+  savedState = { kind: "idle" }; renderSaved();
+  render();
+  code.focus();
+};
+
+window.addEventListener("error", e => write(T("jsErr") + e.message + "\n", "err"));
+window.addEventListener("unhandledrejection", e => write(T("jsErr") + String((e.reason && e.reason.message) || e.reason) + "\n", "err"));
+
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+if ("serviceWorker" in navigator) {
+  const had = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (had && !reloaded) { reloaded = true; location.reload(); }
+  });
+  navigator.serviceWorker.register("sw.js").then(reg => {
+    const w = reg.installing || reg.waiting || reg.active;
+    swInfo = { k: "reg", a: w ? w.state : "" };
+    if (reg.installing) reg.installing.addEventListener("statechange", e => {
+      swInfo = { k: "state", a: e.target.state };
+    });
+    return reg.update();
+  }).catch(e => {
+    const m = String((e && e.message) || e);
+    swInfo = /SecurityError|insecure/i.test(e && e.name + m) ? { k: "private" } : { k: "err", a: ((e && e.name) || "") + " " + m.slice(0, 60) };
+  });
+}
+init();
+</script>
+</body>
+</html>
